@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Almacén Inteligente AR - ThingSpeak</title>
+
+    <!-- Librerías para 3D/AR y rastreo de imagen -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden">
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind;"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <!-- Panel 3D anclado al target 0 -->
+      <a-entity id="target-0" mindar-image-target="targetIndex: 0">
+        <a-plane
+          id="card-bg"
+          position="0 0.65 0"
+          width="1.1"
+          height="0.6"
+          color="#1e293b"
+          opacity="0.9"
+        ></a-plane>
+
+        <a-text
+          id="txt-titulo"
+          value="Producto: SKU-001"
+          position="-0.48 0.82 0.01"
+          width="1.8"
+          color="#ffffff"
+        ></a-text>
+        <a-text
+          id="txt-stock"
+          value="Stock actual: --"
+          position="-0.48 0.65 0.01"
+          width="1.6"
+          color="#38bdf8"
+        ></a-text>
+        <a-text
+          id="txt-minimo"
+          value="Minimo / Estado: --"
+          position="-0.48 0.48 0.01"
+          width="1.6"
+          color="#facc15"
+        ></a-text>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      // [FALTANTE 1]Listo Pon aquí el ID de tu canal de ThingSpeak
+      const CHANNEL_ID = '3592759';
+
+      // [FALTANTE 2]Listo Si tu canal es PRIVADO, pon aquí tu Read API Key; si es público, déjalo vacío ""
+      const READ_API_KEY = 'I3JTBMN8EEXU66O5';
+
+      // Construye la URL oficial de ThingSpeak para leer el último dato en JSON
+      const THINGSPEAK_URL = READ_API_KEY
+        ? `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds/last.json?api_key=${READ_API_KEY}`
+        : `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds/last.json`;
+
+      async function consultarThingSpeak() {
+        try {
+          // Petición HTTP GET a ThingSpeak sin caché para ver el último envío
+          const res = await fetch(THINGSPEAK_URL, { cache: 'no-store' });
+          const data = await res.json();
+
+          // [FALTANTE 3] Asocia cada "field" de ThingSpeak con lo que significa en tu almacén
+          // Ejemplo: field1 = stock actual, field2 = stock mínimo
+          const stockActual = Number(data.field1);
+          const stockMinimo = 5;
+
+          document
+            .querySelector('#txt-stock')
+            .setAttribute('value', `Stock actual: ${stockActual} uds`);
+
+          const panel = document.querySelector('#card-bg');
+          const estadoTxt = document.querySelector('#txt-minimo');
+
+          if (stockActual <= stockMinimo) {
+            estadoTxt.setAttribute(
+              'value',
+              `Min: ${stockMinimo} | REABASTECER`
+            );
+            panel.setAttribute('color', '#7f1d1d'); // Rojo
+          } else {
+            estadoTxt.setAttribute('value', `Min: ${stockMinimo} | DISPONIBLE`);
+            panel.setAttribute('color', '#14532d'); // Verde
+          }
+        } catch (error) {
+          document
+            .querySelector('#txt-minimo')
+            .setAttribute('value', 'Error al leer ThingSpeak');
+          console.error('Error ThingSpeak:', error);
+        }
+      }
+
+      // Consulta al detectar el target y cada 5 segundos
+      document
+        .querySelector('#target-0')
+        .addEventListener('targetFound', consultarThingSpeak);
+      setInterval(consultarThingSpeak, 5000);
+    </script>
+  </body>
+</html>
