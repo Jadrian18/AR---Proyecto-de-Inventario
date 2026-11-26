@@ -8,7 +8,26 @@
     <!-- Librerías para 3D/AR y rastreo de imagen -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <!-- Colocar icono de carga de Mindar abajo a la izquierda-->
+    <style>
+      /* Mueve el contenedor de escaneo de MindAR hacia abajo a la izquierda */
+      .mindar-ui-overlay.mindar-ui-scanning {
+        display: flex !important;
+        align-items: flex-end !important;
+        justify-content: flex-start !important;
+        padding: 20px !important;
+        box-sizing: border-box;
+      }
+    
+      /* Ajusta el tamaño del recuadro/círculo para que no ocupe toda la pantalla */
+      .mindar-ui-scanning .scanning {
+        width: 140px !important;
+        height: 140px !important;
+      }
+    </style>
   </head>
+  
   <body style="margin: 0; overflow: hidden">
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind;"
